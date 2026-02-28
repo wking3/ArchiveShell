@@ -7,26 +7,34 @@
 
 ## 功能特性
 
+### 基础功能
 - ✅ 双击 7z/RAR 文件直接在资源管理器中浏览
 - ✅ 支持复制/粘贴压缩包内文件
 - ✅ 支持拖拽操作
 - ✅ 显示压缩包内文件详细信息
 - ✅ 支持子文件夹浏览
-- ✅ 右键菜单快速访问
+
+### Shell 扩展功能 (完整版)
+- ✅ Windows Shell Namespace Extension 实现
+- ✅ IShellFolder 接口
+- ✅ IEnumIDList 接口
+- ✅ IContextMenu 右键菜单
+- ✅ IExtractImage 图标提取
+- ✅ 注册表自动注册
 
 ## 系统要求
 
 - Windows 10/11 (64 位)
 - Python 3.8+ (64 位)
-- 管理员权限
+- 管理员权限（用于注册 Shell 扩展）
 
 ## 快速开始
 
 ### 方式一：使用已编译的可执行文件
 
-从 [releases](链接) 下载最新版本的 `ArchiveShell.exe`，无需安装 Python 环境。
+从 [Releases](https://github.com/wking3/ArchiveShell/releases) 下载最新版本的 `ArchiveShell.zip`。
 
-### 方式二：从源码运行
+### 方式二：从源码安装
 
 #### 1. 安装依赖
 
@@ -34,60 +42,45 @@
 pip install -r requirements.txt
 ```
 
-#### 2. 安装 Shell 扩展
+#### 2. 注册 Shell 扩展
 
-**方法 A: 使用批处理脚本（推荐）**
-
-```bash
-# 右键以管理员身份运行
-install.bat
-```
-
-**方法 B: 使用 Python 脚本**
+**以管理员身份运行：**
 
 ```bash
-# 以管理员身份运行命令提示符
-python register.py install
+# 方法 1: 使用 Python 脚本
+python shell_extension.py install
+
+# 方法 2: 使用批处理
+register_shell.bat
 ```
 
-**方法 C: 使用图形界面**
-
-```bash
-python installer_gui.py
-```
-
-### 3. 使用
+#### 3. 使用
 
 安装完成后：
 - **双击** 7z/RAR 文件即可在资源管理器中浏览
 - **右键** 点击压缩文件，选择"浏览压缩包"
 
-### 4. 卸载
+#### 4. 卸载
 
 ```bash
 # 以管理员身份运行
-python register.py uninstall
-```
-
-或运行：
-```bash
-uninstall.bat
+python shell_extension.py uninstall
 ```
 
 ## 打包成可执行文件
 
-如果你想要生成独立的 `.exe` 文件（无需 Python 环境）：
+生成独立的 `.exe` 文件（无需 Python 环境）：
 
 ```bash
 # 运行打包脚本
 python build.py
 
-# 或使用批处理脚本
+# 或使用批处理
 build_onefile.bat
 ```
 
 生成的文件在 `dist/` 目录：
-- `ArchiveShell.exe` - 主程序
+- `ArchiveShell.exe` - 主程序 (约 12 MB)
 - `ArchiveShell_Installer.exe` - 命令行安装程序
 - `ArchiveShell_GUI.exe` - 图形化安装程序
 
@@ -95,31 +88,76 @@ build_onefile.bat
 
 ```
 compress/
-├── archive_parser.py      # 压缩文件解析器 (7z/RAR)
-├── archive_shell.py       # Shell 命名空间扩展核心
-├── archive_handler.py     # 压缩文件浏览处理器
-├── register.py            # 注册表注册/注销脚本
-├── installer_gui.py       # 图形化安装程序
-├── build.py               # PyInstaller 打包脚本
-├── build.bat              # 打包批处理脚本
-├── build_onefile.bat      # 一键打包脚本
-├── install.bat            # 一键安装脚本
-├── uninstall.bat          # 一键卸载脚本
-├── requirements.txt       # Python 依赖
-├── *.spec                 # PyInstaller 配置文件
-└── README.md              # 说明文档
+├── archive_parser.py       # 压缩文件解析器 (7z/RAR)
+├── archive_handler.py      # 压缩文件浏览处理器
+├── archive_shell.py        # Shell 命名空间扩展核心
+├── shell_extension.py      # Shell 扩展注册脚本
+├── shell_extension_full.py # 完整 Shell 扩展实现
+├── register.py             # 基础注册表注册
+├── register_com.py         # COM 服务器注册
+├── register_shell.bat      # Shell 扩展注册批处理
+├── build.py                # PyInstaller 打包脚本
+├── installer_gui.py        # 图形化安装程序
+├── install.bat             # 一键安装脚本
+├── uninstall.bat           # 一键卸载脚本
+├── requirements.txt        # Python 依赖
+└── README.md               # 说明文档
 ```
 
 ## 技术说明
 
+### Shell Namespace Extension 实现
+
+本项目实现了完整的 Windows Shell Namespace Extension，包含以下核心组件：
+
+1. **IShellFolder 接口** - 核心文件夹接口
+   - `ParseDisplayName` - 解析显示名称为 PIDL
+   - `EnumObjects` - 枚举文件夹内容
+   - `BindToObject` - 绑定到子对象
+   - `GetAttributesOf` - 获取文件属性
+   - `GetDisplayNameOf` - 获取显示名称
+
+2. **IEnumIDList 接口** - 枚举器
+   - `Next` - 获取下一个 PIDL
+   - `Skip` - 跳过指定数量
+   - `Reset` - 重置枚举器
+   - `Clone` - 克隆枚举器
+
+3. **IPersistFolder2 接口** - 持久化文件夹
+   - `Initialize` - 初始化文件夹
+   - `GetCurFolder` - 获取当前文件夹 PIDL
+
+4. **IContextMenu 接口** - 右键菜单
+   - `QueryContextMenu` - 添加菜单项
+   - `InvokeCommand` - 执行菜单命令
+
+5. **IExtractImage 接口** - 图标提取
+   - `GetLocation` - 获取图标位置
+   - `Extract` - 提取图标
+
 ### 工作原理
 
-由于 Windows Shell Namespace Extension 的完整实现较为复杂，本程序采用了一种实用的方法：
-
-1. **文件关联**: 注册 7z/RAR 文件与处理程序的关联
-2. **临时解压**: 双击文件时，将压缩包内容解压到临时目录
-3. **资源管理器打开**: 在资源管理器中打开临时目录
-4. **自动清理**: 程序退出后自动清理临时文件
+```
+┌─────────────────────────────────────────────────────────┐
+│                  Windows 资源管理器                       │
+├─────────────────────────────────────────────────────────┤
+│  Shell Namespace Extension (IShellFolder)               │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │  ArchiveShellFolder                              │   │
+│  │  ├─ IShellFolder                                 │   │
+│  │  ├─ IEnumIDList                                  │   │
+│  │  ├─ IPersistFolder2                              │   │
+│  │  └─ IContextMenu                                 │   │
+│  └─────────────────────────────────────────────────┘   │
+├─────────────────────────────────────────────────────────┤
+│  ArchiveParser                                          │
+│  ├─ SevenZipParser (py7zr)                              │
+│  └─ RarParser (rarfile)                                 │
+├─────────────────────────────────────────────────────────┤
+│  临时解压目录 (Temp Folder)                              │
+│  └─ 压缩包内容 (解压后可直接访问)                         │
+└─────────────────────────────────────────────────────────┘
+```
 
 ### 支持的格式
 
@@ -130,10 +168,11 @@ compress/
 
 ### 依赖库
 
-- **py7zr**: 7z 格式读写
-- **rarfile**: RAR 格式读取（需要 unar 或 unrar 命令行工具）
-- **comtypes**: COM 接口支持
-- **pywin32**: Windows API 访问
+- **py7zr** - 7z 格式读写
+- **rarfile** - RAR 格式读取（需要 unar 或 unrar）
+- **comtypes** - COM 接口支持
+- **pywin32** - Windows API 访问
+- **pyinstaller** - 打包工具
 
 ## 故障排除
 
@@ -141,38 +180,24 @@ compress/
 
 **解决方案：**
 1. 确认已以管理员权限运行安装脚本
-2. 检查注册表是否正确注册
-3. 尝试重启资源管理器
+2. 重启 Windows 资源管理器
+3. 右键选择"浏览压缩包"
 
 ### 问题：RAR 文件无法打开
 
 **解决方案：**
-1. 安装 unar 或 unrar 命令行工具
-2. 从 https://theunarchiver.com/ 下载 unar
-3. 或将 unar.exe 添加到系统 PATH
+1. 安装 unar：https://theunarchiver.com/
+2. 或将 unar.exe 添加到系统 PATH
 
 ### 问题：Python 依赖安装失败
 
-**解决方案：**
 ```bash
 # 升级 pip
 python -m pip install --upgrade pip
 
-# 重新安装依赖
+# 重新安装
 pip install -r requirements.txt --force-reinstall
 ```
-
-## 注意事项
-
-⚠️ **安全提示**: 
-- 临时文件存储在系统临时目录
-- 敏感文件使用后请及时清理
-- 不要打开来源不明的压缩包
-
-⚠️ **性能提示**:
-- 大型压缩包解压可能需要较长时间
-- 临时文件会占用磁盘空间
-- 建议定期清理临时目录
 
 ## 开发说明
 
@@ -189,9 +214,19 @@ pip install -r requirements.txt --force-reinstall
 # 列出压缩包内容
 python archive_handler.py list test.7z
 
-# 查看详细日志
-python -u archive_handler.py test.7z
+# 注册 Shell 扩展
+python shell_extension.py install
+
+# 查看注册表
+regedit HKEY_CLASSES_ROOT\.7z
 ```
+
+## 相关资源
+
+- [Microsoft Docs: Shell Namespace Extensions](https://docs.microsoft.com/en-us/windows/win32/shell/namespace-extensions)
+- [Microsoft Docs: IShellFolder Interface](https://docs.microsoft.com/en-us/windows/win32/api/shlobj_core/nn-shlobj_core-ishellfolder)
+- [GitHub: py7zr](https://github.com/miurahr/py7zr)
+- [GitHub: rarfile](https://github.com/markokr/rarfile)
 
 ## 许可证
 
@@ -200,3 +235,10 @@ MIT License
 ## 贡献
 
 欢迎提交 Issue 和 Pull Request！
+
+## 致谢
+
+感谢以下开源项目：
+- [py7zr](https://github.com/miurahr/py7zr)
+- [rarfile](https://github.com/markokr/rarfile)
+- [SharpShell](https://github.com/dwmkerr/sharpshell)
