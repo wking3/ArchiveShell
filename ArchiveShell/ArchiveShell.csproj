@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PlatformTarget>x64</PlatformTarget>
+    <UseWindowsForms>true</UseWindowsForms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SharpShell" Version="2.7.2" />
+    <PackageReference Include="SevenZipSharp" Version="1.0.0" />
+    <PackageReference Include="Un4seen.Bass.AddOns.Misc" Version="2.4.13" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="ArchiveShell.csproj">
+      <PostBuildEvent>regasm /codebase "$(TargetPath)"</PostBuildEvent>
+    </None>
+  </ItemGroup>
+
+</Project>
